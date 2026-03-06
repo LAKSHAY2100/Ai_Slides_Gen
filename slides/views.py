@@ -6,6 +6,11 @@ import base64
 from google.genai import types
 import webbrowser
 
+import random 
+import string
+from .models import SharedSlides
+
+
 import os
 from dotenv import load_dotenv
 
@@ -22,7 +27,23 @@ client = genai.Client()
 def slide_builder(request):
     return render(request, 'slide_builder.html')
 
+# _ at start means this function can be imported in any other file but it is intended for internal use in this file only. It is a convention to indicate that this function is a helper function and not meant to be used outside of this module.
+def _make_code(length=6):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
+@csrf_exempt
+def share_slides(request):
+    if(request.method != 'POST'):
+        return JsonResponse({'error': 'Only POST Allowed'}, status=405)
+
+    try:
+        body = json.loads(request.body.decode('utf-8'))
+        slides = body.get('slides',[])
+    except:
+        return JsonResponse({'error':'Invalid Json'},status=400)
+    code = _make_code()
+    SharedSlides.objects.create(share_code=code,slides_json=slides)
+    return JsonResponse({'code':code})
 def _generate_slide_titles(topic: str, slide_type: str) -> list[str]:
     prompt = f"""
         Return exactly five slide titles for a beginner-friendly {slide_type} presentation about "{topic}".
@@ -78,7 +99,7 @@ def _generate_slide_image(title:str , topic:str , type:str) -> str | None:
 
     try:
         response = client.models.generate_content(
-            model="gemini-3-pro-image-preview",
+            model="gemini-2.5-flash-image",
             contents=prompt,
             config = types.GenerateContentConfig(
                 image_config = types.ImageConfig(
