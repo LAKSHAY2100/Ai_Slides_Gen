@@ -169,7 +169,7 @@
     </main>
 
     <script>
-        const sharedSlides = {{ shared_slides|default: "null" | safe}};
+        const sharedSlides = {{ shared_slides|default:"null"|safe }};
         const slidesData = sharedSlides || [
             {
                 id: 0,

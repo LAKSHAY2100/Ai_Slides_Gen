@@ -44,6 +44,16 @@ def share_slides(request):
     code = _make_code()
     SharedSlides.objects.create(share_code=code,slides_json=slides)
     return JsonResponse({'code':code})
+
+
+def view_shared(request,code):
+    try:
+        record = SharedSlides.objects.get(share_code=code)
+    except SharedSlides.DoesNotExist:
+        return render(request,'not_found.html')
+    
+    return render(request,'slide_builder.html',{'shared_slides':json.dumps(record.slides_json)})
+
 def _generate_slide_titles(topic: str, slide_type: str) -> list[str]:
     prompt = f"""
         Return exactly five slide titles for a beginner-friendly {slide_type} presentation about "{topic}".
