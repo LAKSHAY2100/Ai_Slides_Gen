@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -7,393 +8,1239 @@
     <title>AI Slide Builder</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <style>
+        :root {
+            --brand: #4f46e5;
+            --brand-light: #6366f1;
+            --brand-dark: #3730a3;
+            --accent: #06b6d4;
+            --accent2: #f59e0b;
+            --surface: #ffffff;
+            --surface2: #f8f7ff;
+            --border: #e5e4f5;
+            --text: #1e1b4b;
+            --text2: #6b7280;
+            --radius: 16px;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--surface2);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        .perspective-1000 {
-            perspective: 1000px;
-        }
-
-        .slide-type-btn {
+        /* ── HERO GRADIENT BG ── */
+        .hero-bg {
             position: relative;
-            transition: transform 220ms ease, border-color 220ms ease, color 220ms ease, box-shadow 220ms ease, background-color 220ms ease;
-            will-change: transform;
+            background: linear-gradient(135deg, #0f0c29 0%, #1e1b4b 40%, #312e81 70%, #4f46e5 100%);
+            overflow: hidden;
+        }
+        .hero-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 20% 30%, rgba(99,102,241,0.35) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 80% at 80% 70%, rgba(6,182,212,0.25) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 40% at 50% 50%, rgba(245,158,11,0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .hero-bg::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
         }
 
-        .slide-type-btn:hover {
-            transform: translateY(-2px) scale(1.03);
-            border-color: #93c5fd;
-            box-shadow: 0 10px 20px -14px rgba(37, 99, 235, 0.85);
+        /* ── FLOATING ORBS ── */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            pointer-events: none;
+            animation: orbFloat 8s ease-in-out infinite;
+        }
+        .orb-1 { width: 320px; height: 320px; background: rgba(99,102,241,0.4); top: -80px; left: -80px; animation-delay: 0s; }
+        .orb-2 { width: 240px; height: 240px; background: rgba(6,182,212,0.3); top: 40%; right: -60px; animation-delay: -3s; }
+        .orb-3 { width: 180px; height: 180px; background: rgba(245,158,11,0.25); bottom: 10%; left: 20%; animation-delay: -6s; }
+        @keyframes orbFloat {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-30px) scale(1.08); }
         }
 
-        .slide-type-btn:active {
-            transform: translateY(0) scale(0.98);
+        /* ── NAVBAR ── */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(15, 12, 41, 0.85);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 14px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            position: relative;
+        }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        .nav-logo-icon {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, #6366f1, #06b6d4);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 14px rgba(99,102,241,0.4);
+            overflow: hidden;
+        }
+        .nav-logo-text {
+            font-size: 16px; font-weight: 800; color: #fff; letter-spacing: -0.3px;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .nav-link {
+            padding: 7px 14px; border-radius: 8px; font-size: 15px; font-weight: 600;
+            color: rgba(255,255,255,0.75); text-decoration: none;
+            transition: all 0.2s; cursor: pointer; border: none; background: none;
+        }
+        .nav-link:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .nav-link.active { color: #a5b4fc; }
+        .nav-btn {
+            padding: 8px 20px; border-radius: 50px; font-size: 15px; font-weight: 700;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: #fff; border: none; cursor: pointer;
+            box-shadow: 0 4px 14px rgba(99,102,241,0.4);
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .nav-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,0.5); }
+        .nav-btn.outline {
+            background: transparent;
+            border: 1.5px solid rgba(255,255,255,0.25);
+            box-shadow: none;
+        }
+        .nav-btn.outline:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.4); }
+
+        /* ── HERO SECTION ── */
+        .hero-content {
+            position: relative; z-index: 10;
+            padding: 110px 24px 90px;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 50px;
+            padding: 8px 18px; margin-bottom: 28px;
+            font-size: 15px; font-weight: 600; color: #a5b4fc;
+            animation: fadeSlideDown 0.6s ease both;
+        }
+        .hero-badge-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 8px #4ade80;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        .hero-title {
+            font-size: clamp(30px, 4.4vw, 46px);
+            font-weight: 900;
+            line-height: 1.05;
+            letter-spacing: -2px;
+            color: #fff;
+            margin-bottom: 20px;
+            animation: fadeSlideDown 0.7s 0.1s ease both;
+        }
+        .hero-title .gradient-text {
+            background: linear-gradient(90deg, #a5b4fc, #67e8f9, #fde68a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-subtitle {
+            font-size: clamp(16px, 1.8vw, 19px);
+            color: rgba(255,255,255,0.65);
+            max-width: 560px;
+            line-height: 1.6;
+            margin-bottom: 64px;
+            font-weight: 400;
+            animation: fadeSlideDown 0.7s 0.2s ease both;
+        }
+        .typing-target {
+            position: relative;
+            white-space: pre-wrap;
+        }
+        .typing-target.is-typing::after {
+            content: '|';
+            margin-left: 2px;
+            color: rgba(255,255,255,0.95);
+            animation: caretBlink 1.15s steps(1, end) infinite;
+        }
+        .typing-target.gradient-text.is-typing::after {
+            color: #fde68a;
+        }
+        @keyframes caretBlink {
+            0%, 45% { opacity: 1; }
+            46%, 100% { opacity: 0; }
         }
 
-        .slide-type-btn.is-active {
-            color: #1d4ed8;
-            border-color: #3b82f6;
-            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-            box-shadow: 0 10px 22px -16px rgba(37, 99, 235, 0.95);
-            animation: selectedPop 280ms ease;
+        @keyframes fadeSlideDown {
+            from { opacity: 0; transform: translateY(-16px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes selectedPop {
-            0% {
-                transform: scale(0.94);
+        /* ── SEARCH / INPUT CARD ── */
+        .input-card {
+            width: 100%; max-width: 680px;
+            background: rgba(255,255,255,0.07);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 24px;
+            padding: 28px 28px 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: fadeSlideDown 0.7s 0.3s ease both;
+            margin-bottom: 8px;
+        }
+        .topic-input-wrap {
+            position: relative;
+            margin-bottom: 16px;
+        }
+        .topic-input-icon {
+            position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
+            color: rgba(255,255,255,0.4); pointer-events: none;
+        }
+        .topic-input {
+            width: 100%;
+            background: rgba(255,255,255,0.08);
+            border: 1.5px solid rgba(255,255,255,0.15);
+            border-radius: 14px;
+            padding: 16px 18px 16px 50px;
+            color: #fff;
+            font-size: 15px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 500;
+            outline: none;
+            transition: all 0.25s;
+        }
+        .topic-input::placeholder { color: rgba(255,255,255,0.35); }
+        .topic-input:focus {
+            border-color: rgba(165,180,252,0.6);
+            background: rgba(255,255,255,0.12);
+            box-shadow: 0 0 0 4px rgba(99,102,241,0.15);
+        }
+        .topic-input-meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .upload-input { display: none; }
+        .upload-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1.5px solid rgba(255,255,255,0.16);
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .upload-trigger:hover {
+            background: rgba(255,255,255,0.14);
+            border-color: rgba(165,180,252,0.5);
+            transform: translateY(-1px);
+        }
+        .upload-trigger:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(99,102,241,0.18);
+        }
+        .file-meta {
+            flex: 1;
+            min-width: 220px;
+            text-align: left;
+            color: rgba(255,255,255,0.62);
+            font-size: 13px;
+            line-height: 1.45;
+        }
+        .file-meta.has-file { color: rgba(255,255,255,0.86); }
+        .file-name {
+            display: block;
+            margin-bottom: 2px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #c7d2fe;
+        }
+        .file-hint { display: block; }
+        .clear-file-btn {
+            border: none;
+            background: none;
+            color: rgba(255,255,255,0.72);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 6px 4px;
+        }
+        .clear-file-btn:hover { color: #fff; }
+
+        /* ── TYPE CHIPS ── */
+        .chips-row {
+            display: flex; flex-wrap: wrap; gap: 8px;
+            margin-bottom: 24px;
+        }
+        .chip {
+            padding: 8px 18px; border-radius: 50px;
+            font-size: 15px; font-weight: 600;
+            background: rgba(255,255,255,0.08);
+            border: 1.5px solid rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .chip:hover {
+            background: rgba(255,255,255,0.15);
+            border-color: rgba(165,180,252,0.5);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+        .chip.is-active {
+            background: linear-gradient(135deg, rgba(99,102,241,0.6), rgba(79,70,229,0.5));
+            border-color: #a5b4fc;
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+            transform: translateY(-2px);
+        }
+        .chip-icon { font-size: 15px; }
+
+        /* ── GENERATE BUTTON ── */
+        .generate-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #4338ca 100%);
+            color: #fff;
+            font-size: 15px; font-weight: 700;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            padding: 16px 24px;
+            border-radius: 14px;
+            border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            box-shadow: 0 8px 28px rgba(99,102,241,0.5);
+            transition: all 0.25s;
+            position: relative; overflow: hidden;
+        }
+        .generate-btn::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+            opacity: 0;
+            transition: opacity 0.25s;
+        }
+        .generate-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(99,102,241,0.6); }
+        .generate-btn:hover::before { opacity: 1; }
+        .generate-btn:active { transform: translateY(0) scale(0.99); }
+        .generate-btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+
+        /* ── STATS ROW ── */
+        .stats-row {
+            display: flex; gap: 32px; justify-content: center;
+            margin-top: 44px;
+            animation: fadeSlideDown 0.7s 0.5s ease both;
+        }
+        .stat-item { text-align: center; }
+        .stat-num {
+            font-size: 22px; font-weight: 800; color: #fff;
+            display: block; line-height: 1;
+        }
+        .stat-label { font-size: 14px; color: rgba(255,255,255,0.5); font-weight: 500; margin-top: 4px; }
+
+        /* ── DIVIDER WAVE ── */
+        .wave-divider { line-height: 0; }
+        .wave-divider svg { display: block; width: 100%; }
+
+        /* ── SLIDES SECTION (white bg) ── */
+        .slides-section {
+            background: #fff;
+            padding: 80px 0 96px;
+        }
+        .section-panel {
+            position: relative;
+            border-top: 1px solid rgba(79,70,229,0.08);
+        }
+        .section-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(99,102,241,0.5) 45%, rgba(6,182,212,0.5) 55%, transparent 100%);
+            opacity: 0.7;
+        }
+        .section-separator {
+            height: 40px;
+            width: 100%;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(79,70,229,0.06) 60%, rgba(79,70,229,0.1) 100%);
+            border-top: 1px solid rgba(79,70,229,0.08);
+            border-bottom: 1px solid rgba(79,70,229,0.08);
+        }
+        .section-separator.dark {
+            background:
+                linear-gradient(180deg, rgba(15,12,41,0) 0%, rgba(15,12,41,0.35) 70%, rgba(15,12,41,0.55) 100%);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .section-label {
+            font-size: 14px; font-weight: 700; letter-spacing: 1.5px;
+            color: var(--brand); text-transform: uppercase; text-align: center;
+            margin-bottom: 10px;
+        }
+        .section-title {
+            font-size: clamp(24px, 3.2vw, 32px); font-weight: 800;
+            text-align: center; color: var(--text);
+            letter-spacing: -1px; margin-bottom: 62px; line-height: 1.2;
+        }
+
+        /* ── CAROUSEL ── */
+        .perspective-1000 { perspective: 1200px; }
+        .carousel-wrap {
+            position: relative; width: 100%; height: 420px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .nav-arrow {
+            position: absolute; z-index: 30;
+            background: #fff;
+            border: 1.5px solid var(--border);
+            border-radius: 50%;
+            width: 48px; height: 48px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(79,70,229,0.12);
+            color: #6b7280;
+            transition: all 0.2s;
+        }
+        .nav-arrow:hover { color: var(--brand); border-color: #a5b4fc; transform: scale(1.1); box-shadow: 0 8px 24px rgba(79,70,229,0.2); }
+        .nav-arrow:active { transform: scale(0.95); }
+        .nav-arrow.left { left: 0; }
+        .nav-arrow.right { right: 0; }
+
+        /* ── ACTION BUTTONS ── */
+        .actions-row {
+            display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 52px;
+        }
+        .action-btn {
+            display: flex; align-items: center; gap: 8px;
+            padding: 12px 22px; border-radius: 12px;
+            font-size: 15px; font-weight: 600;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            cursor: pointer; transition: all 0.2s; border: 1.5px solid transparent;
+        }
+        .action-btn.ghost {
+            background: #fff; color: var(--text);
+            border-color: var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .action-btn.ghost:hover { border-color: #a5b4fc; color: var(--brand); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(79,70,229,0.1); }
+        .action-btn.primary {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+        }
+        .action-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(99,102,241,0.5); }
+
+        /* ── HOW IT WORKS ── */
+        .how-section {
+            background: linear-gradient(180deg, #f8f7ff 0%, #f1efff 100%);
+            padding: 84px 0;
+        }
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 30px;
+            width: 100%;
+            margin: 0;
+            padding: 0 32px;
+        }
+        .step-card {
+            background: #fff;
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            padding: 28px 24px;
+            transition: all 0.3s;
+            position: relative; overflow: hidden;
+        }
+        .step-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, #6366f1, #06b6d4);
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .step-card:hover { border-color: #a5b4fc; transform: translateY(-6px); box-shadow: 0 16px 40px rgba(79,70,229,0.12); }
+        .step-card:hover::before { opacity: 1; }
+        .step-num {
+            width: 42px; height: 42px; border-radius: 12px;
+            background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+            color: var(--brand); font-size: 18px; font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 16px;
+        }
+        .step-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+        .step-desc { font-size: 16px; color: var(--text2); line-height: 1.6; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        /* ── FEATURES STRIP ── */
+        .features-strip {
+            background: linear-gradient(135deg, #1e1b4b, #312e81);
+            padding: 76px 0;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            width: 100%;
+            margin: 0;
+            padding: 0 32px;
+        }
+
+        .builder-info-strip {
+            width: 100%;
+            background: linear-gradient(180deg, #e8eaee 0%, #dde1e8 100%);
+            padding: 72px 0;
+        }
+        .builder-info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 72px;
+            width: 100%;
+            padding: 0 24px;
+        }
+        .builder-info-card h3 {
+            font-size: clamp(24px, 2.6vw, 34px);
+            font-weight: 500;
+            color: #111827;
+            margin-bottom: 22px;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+        }
+        .builder-info-card p {
+            font-size: clamp(16px, 1.2vw, 20px);
+            line-height: 1.6;
+            color: #374151;
+            max-width: 34ch;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .feature-item {
+            display: flex; align-items: flex-start; gap: 14px;
+            padding: 20px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.25s;
+        }
+        .feature-item:hover { background: rgba(255,255,255,0.09); border-color: rgba(165,180,252,0.3); }
+        .feature-icon {
+            width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+            background: linear-gradient(135deg, rgba(99,102,241,0.5), rgba(6,182,212,0.3));
+            display: flex; align-items: center; justify-content: center;
+            color: #a5b4fc;
+        }
+        .feature-title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+        .feature-desc { font-size: 15px; color: rgba(255,255,255,0.5); line-height: 1.5; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        /* ── PROFILE MODAL ── */
+        .profile-modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(15,12,41,0.6);
+            backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 200; padding: 16px;
+        }
+        .profile-modal {
+            width: 100%; max-width: 360px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 24px 60px rgba(15,12,41,0.35);
+            padding: 24px;
+        }
+
+        /* ── LOADING ── */
+        #loadingOverlay {
+            position: fixed; inset: 0;
+            background: rgba(15,12,41,0.7);
+            backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 500;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .loading-inner {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 20px;
+            padding: 36px 48px;
+            display: flex; flex-direction: column; align-items: center; gap: 16px;
+        }
+        .spinner-ring {
+            width: 48px; height: 48px;
+            border: 3px solid rgba(165,180,252,0.3);
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── FOOTER ── */
+        .footer {
+            background: #0f0c29;
+            padding: 44px 24px;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .footer-text { font-size: 15px; color: rgba(255,255,255,0.35); }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 640px) {
+            .navbar { padding: 12px 16px; }
+            .nav-links { display: none; }
+            .hero-content { padding: 72px 16px 58px; }
+            .stats-row { gap: 20px; }
+            .stat-num { font-size: 18px; }
+            .carousel-wrap { height: 280px; }
+            .nav-arrow.left { left: -4px; }
+            .nav-arrow.right { right: -4px; }
+            .builder-info-grid {
+                grid-template-columns: 1fr;
+                gap: 26px;
+                padding: 0 16px;
             }
-
-            60% {
-                transform: scale(1.06);
-            }
-
-            100% {
-                transform: scale(1);
-            }
+            .slides-section { padding: 62px 0 74px; }
+            .how-section { padding: 66px 0; }
+            .features-strip { padding: 60px 0; }
+            .steps-grid, .features-grid { padding: 0 16px; }
         }
     </style>
 </head>
 
-<body class="min-h-screen bg-gray-50 text-gray-800 font-sans selection:bg-blue-100 overflow-x-hidden">
+<body>
 
-    <header class="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
-        <div class="flex items-center gap-2">
-            <div
-                class="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold">
-                <i data-lucide="presentation" class="w-[18px] h-[18px]"></i>
+    <!-- ─────────────────────── NAVBAR ─────────────────────── -->
+    <header class="navbar">
+        <a href="#" class="nav-logo">
+            <div class="nav-logo-icon">
+                <img src="{% static 'slideai.jpeg' %}" alt="SlideAI logo" style="width:100%;height:100%;object-fit:cover;" />
             </div>
-            <span class="font-bold text-lg tracking-tight">AI Slide Builder</span>
-        </div>
+            <span class="nav-logo-text">SlideAI</span>
+        </a>
 
-        <nav class="flex items-center gap-8 hidden md:flex">
-            <a href="#" class="text-blue-600 font-medium border-b-2 border-blue-600 pb-0.5">Home</a>
+        <nav class="nav-links hidden md:flex">
+            <a href="{% url 'story_telling' %}" class="nav-link">Story</a>
+            <a href="{% url 'slide_builder' %}" class="nav-link active">Home</a>
+            <a href="#how" class="nav-link">How it works</a>
+            <a href="#features" class="nav-link">Features</a>
         </nav>
 
-        <button
-            class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full font-medium text-sm transition-colors shadow-sm">
-            New deck
-        </button>
+        <div style="display:flex;align-items:center;gap:10px;">
+            {% if request.user.is_authenticated %}
+            <a href="{% url 'logout' %}" class="nav-btn outline">Log out</a>
+            <button id="profileToggle" class="nav-btn" style="width:38px;height:38px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:15px;font-weight:800;">
+                {{ request.user.username|slice:":1"|upper }}
+            </button>
+            {% else %}
+            <a href="{% url 'login' %}" class="nav-btn outline">Log In</a>
+            <button class="nav-btn">Get Started</button>
+            {% endif %}
+        </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 pt-10 pb-20 flex flex-col items-center">
+    <!-- ─────────────────────── PROFILE MODAL ─────────────────────── -->
+    {% if request.user.is_authenticated %}
+    <div id="profileModalOverlay" class="profile-modal-overlay hidden">
+        <div id="profileModal" class="profile-modal">
+            <div style="display:flex;align-items:start;justify-content:space-between;margin-bottom:16px;">
+                <h3 style="font-size:16px;font-weight:700;color:#1e1b4b;">Profile</h3>
+                <button id="profileModalClose" style="color:#9ca3af;background:none;border:none;font-size:22px;cursor:pointer;line-height:1;">&times;</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+                <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#ede9fe,#c7d2fe);color:#4f46e5;font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center;">
+                    {{ request.user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <p style="font-size:15px;font-weight:700;color:#1e1b4b;">{{ request.user.username }}</p>
+                    <p style="font-size:13px;color:#6b7280;">{% if request.user.email %}{{ request.user.email }}{% else %}No email set{% endif %}</p>
+                </div>
+            </div>
+            <div style="font-size:14px;color:#374151;display:flex;flex-direction:column;gap:10px;">
+                <p><span style="font-weight:600;color:#1e1b4b;">User ID:</span> {{ request.user.id }}</p>
+                <p><span style="font-weight:600;color:#1e1b4b;">Joined:</span> {{ request.user.date_joined|date:"M d, Y" }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
-        <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-8 tracking-tight text-center">
-            AI Slide Builder
-        </h1>
+    <!-- ─────────────────────── HERO ─────────────────────── -->
+    <section class="hero-bg">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
 
-        <div class="w-full max-w-2xl flex flex-col gap-4 mb-16 relative z-30">
-            <input id="topicInput" type="text" placeholder="Explain quantum computing basics"
-                class="w-full px-6 py-4 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-sm text-gray-600 text-lg placeholder:text-gray-400 bg-white" />
+        <div class="hero-content">
+            <div class="hero-badge">
+                <span class="hero-badge-dot"></span>
+                AI-Powered Presentations
+            </div>
 
-            <div class="flex gap-3 flex-wrap justify-center">
-                <button
-                    class="slide-type-btn px-5 py-2 rounded-lg border-2 border-gray-300 text-gray-700 font-medium text-sm transition-all cursor-pointer hover:border-gray-400"
-                    data-type="Business">
-                    Business
-                </button>
-                <button
-                    class="slide-type-btn px-5 py-2 rounded-lg border-2 border-gray-300 text-gray-700 font-medium text-sm transition-all cursor-pointer hover:border-gray-400"
-                    data-type="Educational">
-                    Educational
-                </button>
-                <button
-                    class="slide-type-btn px-5 py-2 rounded-lg border-2 border-gray-300 text-gray-700 font-medium text-sm transition-all cursor-pointer hover:border-gray-400"
-                    data-type="Creative">
-                    Creative
-                </button>
-                <button
-                    class="slide-type-btn px-5 py-2 rounded-lg border-2 border-gray-300 text-gray-700 font-medium text-sm transition-all cursor-pointer hover:border-gray-400"
-                    data-type="Data">
-                    Data
-                </button>
-                <button
-                    class="slide-type-btn px-5 py-2 rounded-lg border-2 border-gray-300 text-gray-700 font-medium text-sm transition-all cursor-pointer hover:border-gray-400"
-                    data-type="Administrative">
-                    Administrative
+            <h1 class="hero-title">
+                <span id="heroTypeLine1" class="typing-target"></span><br>
+                <span id="heroTypeLine2" class="gradient-text typing-target"></span>
+            </h1>
+            <p class="hero-subtitle">
+                <span id="heroTypeSubtitle" class="typing-target"></span>
+            </p>
+
+            <!-- INPUT CARD -->
+            <div class="input-card">
+                <div class="topic-input-wrap">
+                    <span class="topic-input-icon">
+                        <i data-lucide="sparkles" style="width:18px;height:18px;"></i>
+                    </span>
+                    <input id="topicInput" type="text"
+                        placeholder="e.g. Explain quantum computing basics or upload a source file..."
+                        class="topic-input" autocomplete="off" />
+                </div>
+
+                <input id="documentInput" type="file" class="upload-input"
+                    accept=".pdf,.csv,.doc,.docx,application/pdf,text/csv,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+                <div class="topic-input-meta">
+                    <button id="documentTrigger" type="button" class="upload-trigger">
+                        <i data-lucide="paperclip" style="width:16px;height:16px;"></i>
+                        Upload document
+                    </button>
+                    <div id="fileMeta" class="file-meta" aria-live="polite">
+                        <span id="fileName" class="file-name">No document selected</span>
+                        <span id="fileHint" class="file-hint">Add a PDF, CSV, or Word file to generate slides from source content.</span>
+                    </div>
+                    <button id="clearDocumentBtn" type="button" class="clear-file-btn hidden">Clear</button>
+                </div>
+
+                <div class="chips-row">
+                    <button class="chip" data-type="Business"><span class="chip-icon">💼</span> Business</button>
+                    <button class="chip" data-type="Educational"><span class="chip-icon">🎓</span> Educational</button>
+                    <button class="chip" data-type="Creative"><span class="chip-icon">🎨</span> Creative</button>
+                    <button class="chip" data-type="Data"><span class="chip-icon">📊</span> Data</button>
+                    <button class="chip" data-type="Administrative"><span class="chip-icon">📋</span> Admin</button>
+                </div>
+
+                <button id="generateBtn" class="generate-btn">
+                    <i data-lucide="zap" style="width:18px;height:18px;"></i>
+                    <span id="generateText">Generate slides</span>
+                    <span id="spinner" class="hidden" style="width:18px;height:18px;border:2.5px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;"></span>
                 </button>
             </div>
 
-            <button id="generateBtn"
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-full shadow-md hover:shadow-lg transition-all transform active:scale-[0.99] text-lg">
-                <span id="generateText">Generate slides</span>
-                <span id="spinner"
-                    class="hidden w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-
-            </button>
-        </div>
-
-        <div class="relative w-full h-[450px] flex items-center justify-center perspective-1000 mb-8">
-            <button id="prevBtn"
-                class="absolute left-4 md:left-10 z-30 bg-white p-3 rounded-full shadow-lg border border-gray-100 text-gray-400 hover:text-blue-600 hover:border-blue-100 transition-all hover:scale-110 active:scale-95 cursor-pointer">
-                <i data-lucide="chevron-left" class="w-6 h-6"></i>
-            </button>
-
-            <div id="slides-container" class="relative w-full h-full flex items-center justify-center"></div>
-
-            <button id="nextBtn"
-                class="absolute right-4 md:right-10 z-30 bg-white p-3 rounded-full shadow-lg border border-gray-100 text-gray-400 hover:text-blue-600 hover:border-blue-100 transition-all hover:scale-110 active:scale-95 cursor-pointer">
-                <i data-lucide="chevron-right" class="w-6 h-6"></i>
-            </button>
-        </div>
-
-        <div class="flex flex-col sm:flex-row gap-4 relative z-30">
-            <button id="downloadPdfBtn"
-                class="flex items-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 font-medium rounded-xl shadow-sm border border-gray-200 transition-all text-sm hover:-translate-y-0.5">
-                Download as PDF
-            </button>
-            <button id="downloadPngBtn"
-                class="flex items-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 font-medium rounded-xl shadow-sm border border-gray-200 transition-all text-sm hover:-translate-y-0.5">
-                Download all slides as PNG
-            </button>
-
-            <button id="shareBtn"
-                class="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-xl shadow-sm transition-all text-sm hover:-translate-y-0.5">
-                Share
-            </button>
-
-        </div>
-
-
-        <div id="loadingOverlay"
-            class="fixed inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-50 opacity-0 pointer-events-none transition-opacity duration-300">
-            <div class="flex flex-col items-center gap-3">
-                <div class="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                <p class="text-gray-700 font-medium text-lg">Generating slides…</p>
+            <!-- STATS -->
+            <div class="stats-row">
+                <div class="stat-item">
+                    <span class="stat-num">10K+</span>
+                    <span class="stat-label">Slides Generated</span>
+                </div>
+                <div class="stat-item" style="border-left:1px solid rgba(255,255,255,0.1);border-right:1px solid rgba(255,255,255,0.1);padding:0 32px;">
+                    <span class="stat-num">5+</span>
+                    <span class="stat-label">Slide Types</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-num">Free</span>
+                    <span class="stat-label">Always</span>
+                </div>
             </div>
         </div>
+    </section>
 
-    </main>
+    <!-- WAVE DIVIDER -->
+    <div class="wave-divider" style="background:#fff;">
+        <svg viewBox="0 0 1440 60" preserveAspectRatio="none" style="height:60px;">
+            <path d="M0,60 L0,20 Q180,60 360,30 Q540,0 720,30 Q900,60 1080,30 Q1260,0 1440,30 L1440,60 Z" fill="#1e1b4b"/>
+        </svg>
+    </div>
 
+    <div class="section-separator"></div>
+    <section class="builder-info-strip section-panel">
+        <div class="builder-info-grid">
+            <article class="builder-info-card">
+                <h3>Text to PPT with AI</h3>
+                <p>Transform your ideas into stunning presentations instantly. Write a topic, and our AI crafts compelling presentations for your audience.</p>
+            </article>
+            <article class="builder-info-card">
+                <h3>Control and edit AI-generated content</h3>
+                <p>Refine and tailor AI-generated slides to match your style. Easily edit and customize your presentation for complete control over content.</p>
+            </article>
+            <article class="builder-info-card">
+                <h3>Select a template and download it</h3>
+                <p>Choose from 100+ professional template designs. Download your presentation in an editable PPTX format for further editing in other tools like PowerPoint, Google Slides, or Figma.</p>
+            </article>
+        </div>
+    </section>
+
+    <!-- ─────────────────────── SLIDES CAROUSEL ─────────────────────── -->
+    <div class="section-separator"></div>
+    <section class="slides-section section-panel">
+        <p class="section-label">Preview</p>
+        <h2 class="section-title">Your generated slides</h2>
+
+        <div style="width:100%;padding:0 24px;">
+            <div class="carousel-wrap perspective-1000">
+                <button id="prevBtn" class="nav-arrow left">
+                    <i data-lucide="chevron-left" style="width:22px;height:22px;"></i>
+                </button>
+                <div id="slides-container" style="position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;"></div>
+                <button id="nextBtn" class="nav-arrow right">
+                    <i data-lucide="chevron-right" style="width:22px;height:22px;"></i>
+                </button>
+            </div>
+
+            <!-- slide counter -->
+            <div id="slideCounter" style="text-align:center;margin-top:16px;font-size:15px;font-weight:600;color:#9ca3af;"></div>
+
+            <div class="actions-row">
+                <button id="downloadPdfBtn" class="action-btn ghost">
+                    <i data-lucide="file-down" style="width:16px;height:16px;"></i>
+                    Download PDF
+                </button>
+                <button id="downloadPngBtn" class="action-btn ghost">
+                    <i data-lucide="image-down" style="width:16px;height:16px;"></i>
+                    Download PNG
+                </button>
+                <button id="shareBtn" class="action-btn primary">
+                    <i data-lucide="share-2" style="width:16px;height:16px;"></i>
+                    Share
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─────────────────────── HOW IT WORKS ─────────────────────── -->
+    <div class="section-separator"></div>
+    <section class="how-section section-panel" id="how">
+        <p class="section-label">Simple Process</p>
+        <h2 class="section-title">How it works</h2>
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-num">01</div>
+                <div class="step-title">Enter your topic</div>
+                <p class="step-desc">Type what you want to present. Our AI understands context and intent.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-num">02</div>
+                <div class="step-title">Pick a type</div>
+                <p class="step-desc">Choose from Business, Educational, Creative, Data or Administrative slides.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-num">03</div>
+                <div class="step-title">Generate instantly</div>
+                <p class="step-desc">AI creates a full deck with visuals and titles in seconds.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-num">04</div>
+                <div class="step-title">Download & share</div>
+                <p class="step-desc">Export as PDF or PNG, or share a live link with one click.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─────────────────────── FEATURES STRIP ─────────────────────── -->
+    <div class="section-separator dark"></div>
+    <section class="features-strip section-panel" id="features">
+        <p class="section-label" style="color:#a5b4fc;">What's included</p>
+        <h2 class="section-title" style="color:#fff;">Everything you need</h2>
+        <div class="features-grid">
+            <div class="feature-item">
+                <div class="feature-icon"><i data-lucide="zap" style="width:18px;height:18px;"></i></div>
+                <div>
+                    <div class="feature-title">Lightning fast</div>
+                    <p class="feature-desc">Generate a full deck in under 10 seconds.</p>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i data-lucide="palette" style="width:18px;height:18px;"></i></div>
+                <div>
+                    <div class="feature-title">AI visuals</div>
+                    <p class="feature-desc">Each slide gets a contextual AI-generated image.</p>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i data-lucide="download" style="width:18px;height:18px;"></i></div>
+                <div>
+                    <div class="feature-title">Export anywhere</div>
+                    <p class="feature-desc">Download as PDF or PNG for any platform.</p>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i data-lucide="share-2" style="width:18px;height:18px;"></i></div>
+                <div>
+                    <div class="feature-title">One-click sharing</div>
+                    <p class="feature-desc">Share a live link — no account required to view.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ─────────────────────── FOOTER ─────────────────────── -->
+    <footer class="footer">
+        <div class="nav-logo" style="justify-content:center;margin-bottom:12px;">
+            <div class="nav-logo-icon"><img src="{% static 'slideai.jpeg' %}" alt="SlideAI logo" style="width:100%;height:100%;object-fit:cover;" /></div>
+            <span class="nav-logo-text" style="font-size:16px;">SlideAI</span>
+        </div>
+        <p class="footer-text">© 2025 SlideAI · Powered by AI · All rights reserved</p>
+    </footer>
+
+    <!-- ─────────────────────── LOADING OVERLAY ─────────────────────── -->
+    <div id="loadingOverlay">
+        <div class="loading-inner">
+            <div class="spinner-ring"></div>
+            <p style="color:#fff;font-weight:600;font-size:16px;">Crafting your slides…</p>
+            <p style="color:rgba(255,255,255,0.5);font-size:15px;">This usually takes a few seconds</p>
+        </div>
+    </div>
+
+    <!-- ─────────────────────── SCRIPTS ─────────────────────── -->
     <script>
         const sharedSlides = {{ shared_slides|default:"null"|safe }};
         const slidesData = sharedSlides || [
-            {
-                id: 0,
-                title: "Introduction to Quantum Computing",
-                image: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800&q=80",
-            },
-            {
-                id: 1,
-                title: "Quantum Superposition",
-                image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80",
-            },
-            {
-                id: 2,
-                title: "Quantum Entanglement",
-                image: "https://images.unsplash.com/photo-1605647540924-852290f6b0d5?auto=format&fit=crop&w=800&q=80",
-            },
-            {
-                id: 3,
-                title: "Future of Computing",
-                image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80",
-            },
-            {
-                id: 4,
-                title: "Qubit Architecture",
-                image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
-            }
+            { id: 0, title: "Introduction to Quantum Computing", image: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=800&q=80" },
+            { id: 1, title: "Quantum Superposition", image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80" },
+            { id: 2, title: "Quantum Entanglement", image: "https://images.unsplash.com/photo-1605647540924-852290f6b0d5?auto=format&fit=crop&w=800&q=80" },
+            { id: 3, title: "Future of Computing", image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80" },
+            { id: 4, title: "Qubit Architecture", image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80" }
         ];
 
         let activeSlide = 1;
         const container = document.getElementById('slides-container');
+        const counter = document.getElementById('slideCounter');
+
+        function updateCounter() {
+            if (counter) counter.textContent = `${activeSlide + 1} / ${slidesData.length}`;
+        }
 
         function init() {
+            container.innerHTML = '';
             slidesData.forEach((slide, index) => {
-                const slideEl = document.createElement('div');
-                slideEl.id = `slide-${index}`;
-                slideEl.className = "absolute w-[320px] md:w-[600px] h-[220px] md:h-[400px] bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden border border-gray-100 transition-all duration-500 ease-out transform";
-
-                slideEl.innerHTML = `
-                    <img 
-                        src="${slide.image}" 
-                        alt="${slide.title}"
-                        class="w-full h-full object-cover"
-                    />
-                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-6 md:p-8 text-white">
-                        <h3 class="text-xl md:text-3xl font-bold mb-2">${slide.title}</h3>
-                        <p class="text-sm md:text-base text-gray-200 opacity-90">AI Generated Slide Preview</p>
+                const el = document.createElement('div');
+                el.id = `slide-${index}`;
+                el.style.cssText = `
+                    position:absolute;
+                    width:clamp(300px,55vw,580px);
+                    height:clamp(200px,37vw,390px);
+                    background:#fff;
+                    border-radius:20px;
+                    box-shadow:0 20px 60px rgba(15,12,41,0.15);
+                    overflow:hidden;
+                    border:1px solid #e5e4f5;
+                    transition:all 0.5s cubic-bezier(0.4,0,0.2,1);
+                    will-change:transform,opacity;
+                `;
+                el.innerHTML = `
+                    <img src="${slide.image}" alt="${slide.title}" style="width:100%;height:100%;object-fit:cover;" />
+                    <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(15,12,41,0.92) 0%,rgba(15,12,41,0.5) 50%,transparent 100%);padding:28px 24px 24px;">
+                        <h3 style="font-size:clamp(16px,2.1vw,20px);font-weight:800;color:#fff;margin:0 0 6px;font-family:'Plus Jakarta Sans',sans-serif;">${slide.title}</h3>
+                        <p style="font-size:15px;color:rgba(255,255,255,0.6);margin:0;font-family:'Plus Jakarta Sans',sans-serif;">AI Generated Slide</p>
                     </div>
-                    <div class="absolute top-4 right-4 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/30">
-                        <span class="text-xs font-semibold text-white">Slide ${index + 1}</span>
+                    <div style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.12);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.2);border-radius:50px;padding:5px 12px;">
+                        <span style="font-size:14px;font-weight:700;color:#fff;">Slide ${index + 1}</span>
                     </div>
                 `;
-                container.appendChild(slideEl);
+                container.appendChild(el);
             });
-
             updateSlides();
         }
 
         function updateSlides() {
-            const length = slidesData.length;
-
-            slidesData.forEach((_, index) => {
-                const el = document.getElementById(`slide-${index}`);
-                let offset = (index - activeSlide + length) % length;
-                if (offset > length / 2) offset -= length;
-
-                let classes = "absolute w-[320px] md:w-[600px] h-[220px] md:h-[400px] bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden border border-gray-100 transition-all duration-500 ease-out transform ";
+            const len = slidesData.length;
+            slidesData.forEach((_, i) => {
+                const el = document.getElementById(`slide-${i}`);
+                if (!el) return;
+                let offset = (i - activeSlide + len) % len;
+                if (offset > len / 2) offset -= len;
 
                 if (offset === 0) {
-                    classes += "z-20 scale-100 opacity-100 translate-x-0 shadow-2xl border-blue-100";
+                    el.style.transform = 'translateX(0) scale(1) translateZ(0)';
+                    el.style.opacity = '1';
+                    el.style.zIndex = '20';
+                    el.style.filter = 'none';
+                    el.style.pointerEvents = 'auto';
                 } else if (offset === -1) {
-                    classes += "z-10 scale-90 opacity-50 -translate-x-[280px] md:-translate-x-[350px] blur-[1px]";
+                    el.style.transform = 'translateX(-52%) scale(0.88) translateZ(-80px)';
+                    el.style.opacity = '0.45';
+                    el.style.zIndex = '10';
+                    el.style.filter = 'blur(1.5px)';
+                    el.style.pointerEvents = 'none';
                 } else if (offset === 1) {
-                    classes += "z-10 scale-90 opacity-50 translate-x-[280px] md:translate-x-[350px] blur-[1px]";
+                    el.style.transform = 'translateX(52%) scale(0.88) translateZ(-80px)';
+                    el.style.opacity = '0.45';
+                    el.style.zIndex = '10';
+                    el.style.filter = 'blur(1.5px)';
+                    el.style.pointerEvents = 'none';
                 } else {
-                    classes += "z-0 scale-75 opacity-0 translate-x-0 pointer-events-none";
+                    el.style.transform = 'translateX(0) scale(0.7)';
+                    el.style.opacity = '0';
+                    el.style.zIndex = '0';
+                    el.style.filter = 'none';
+                    el.style.pointerEvents = 'none';
                 }
-
-                el.className = classes;
             });
+            updateCounter();
         }
 
         document.addEventListener("DOMContentLoaded", () => {
-            const input = document.getElementById("topicInput");
-            const generateBtn = document.getElementById("generateBtn");
-            const downloaddPdfBtn = document.getElementById("downloadPdfBtn");
-            const downloadPngBtn = document.getElementById("downloadPngBtn");
-            const shareBtn = document.getElementById("shareBtn");
-            const slideTypeBtns = document.querySelectorAll(".slide-type-btn");
-            let selectedSlideType = "";
-            if (slideTypeBtns.length > 0) {
-                const setActiveType = (btn) => {
-                    slideTypeBtns.forEach((b) => b.classList.remove("is-active"));
-                    btn.classList.add("is-active");
-                    selectedSlideType = btn.dataset.type || "";
-                };
+            lucide.createIcons();
+            init();
 
-                setActiveType(slideTypeBtns[0]);
-                slideTypeBtns.forEach((btn) => {
-                    btn.addEventListener("click", () => setActiveType(btn));
-                });
+            // ── chip selection ──
+            const heroLine1 = document.getElementById("heroTypeLine1");
+            const heroLine2 = document.getElementById("heroTypeLine2");
+            const heroSubtitle = document.getElementById("heroTypeSubtitle");
+            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+            async function typeInto(node, text, speed) {
+                node.classList.add("is-typing");
+                for (let i = 0; i <= text.length; i++) {
+                    node.textContent = text.slice(0, i);
+                    await sleep(speed);
+                }
+                node.classList.remove("is-typing");
             }
 
-            init();
-            lucide.createIcons();
+            async function eraseInto(node, speed) {
+                node.classList.add("is-typing");
+                for (let i = node.textContent.length; i >= 0; i--) {
+                    node.textContent = node.textContent.slice(0, i);
+                    await sleep(speed);
+                }
+                node.classList.remove("is-typing");
+            }
 
+            async function runHeroTypingLoop() {
+                if (!heroLine1 || !heroLine2 || !heroSubtitle) return;
+                const line1 = "Turn your ideas into";
+                const line2 = "stunning slides";
+                const subtitle = "Write a topic, and our AI crafts beautiful, professional presentations in seconds. No design skills needed.";
+
+                while (true) {
+                    await typeInto(heroLine1, line1, 82);
+                    await sleep(220);
+                    await typeInto(heroLine2, line2, 82);
+                    await sleep(260);
+                    await typeInto(heroSubtitle, subtitle, 36);
+                    await sleep(2400);
+
+                    await eraseInto(heroSubtitle, 18);
+                    await sleep(180);
+                    await eraseInto(heroLine2, 40);
+                    await eraseInto(heroLine1, 40);
+                    await sleep(460);
+                }
+            }
+            runHeroTypingLoop();
+            const chips = document.querySelectorAll(".chip");
+            const topicInput = document.getElementById("topicInput");
+            const documentInput = document.getElementById("documentInput");
+            const documentTrigger = document.getElementById("documentTrigger");
+            const clearDocumentBtn = document.getElementById("clearDocumentBtn");
+            const fileMeta = document.getElementById("fileMeta");
+            const fileName = document.getElementById("fileName");
+            const fileHint = document.getElementById("fileHint");
+            let selectedSlideType = "Business";
+            chips[0].classList.add("is-active");
+            chips.forEach(chip => {
+                chip.addEventListener("click", () => {
+                    chips.forEach(c => c.classList.remove("is-active"));
+                    chip.classList.add("is-active");
+                    selectedSlideType = chip.dataset.type || "";
+                });
+            });
+
+            const supportedExtensions = [".pdf", ".csv", ".doc", ".docx"];
+
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return `${bytes} B`;
+                if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+                return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+            }
+
+            function updateDocumentState() {
+                const file = documentInput.files[0];
+                const hasFile = Boolean(file);
+                fileMeta.classList.toggle("has-file", hasFile);
+                clearDocumentBtn.classList.toggle("hidden", !hasFile);
+
+                if (!hasFile) {
+                    fileName.textContent = "No document selected";
+                    fileHint.textContent = "Add a PDF, CSV, or Word file to generate slides from source content.";
+                    return;
+                }
+
+                const extension = file.name.includes(".") ? `.${file.name.split(".").pop().toLowerCase()}` : "";
+                fileName.textContent = file.name;
+                fileHint.textContent = `${extension.replace(".", "").toUpperCase() || "Document"} file attached (${formatFileSize(file.size)}).`;
+            }
+
+            documentTrigger.addEventListener("click", () => documentInput.click());
+            clearDocumentBtn.addEventListener("click", () => {
+                documentInput.value = "";
+                updateDocumentState();
+            });
+            documentInput.addEventListener("change", () => {
+                const file = documentInput.files[0];
+                if (file) {
+                    const extension = file.name.includes(".") ? `.${file.name.split(".").pop().toLowerCase()}` : "";
+                    if (!supportedExtensions.includes(extension)) {
+                        alert("Please upload a PDF, CSV, DOC, or DOCX file.");
+                        documentInput.value = "";
+                    }
+                }
+                updateDocumentState();
+            });
+            updateDocumentState();
+
+            // ── generate ──
+            const generateBtn = document.getElementById("generateBtn");
             generateBtn.addEventListener("click", async () => {
-                const topic = input.value.trim();
-                if (!topic) return;
-
+                const topic = topicInput.value.trim();
+                const documentFile = documentInput.files[0];
+                if (!topic && !documentFile) {
+                    topicInput.focus();
+                    return;
+                }
                 generateBtn.disabled = true;
                 document.getElementById("generateText").textContent = "Generating...";
                 document.getElementById("spinner").classList.remove("hidden");
-                document.getElementById("loadingOverlay").style.opacity = "1";
-                document.getElementById("loadingOverlay").style.pointerEvents = "auto";
-
+                const overlay = document.getElementById("loadingOverlay");
+                overlay.style.opacity = "1"; overlay.style.pointerEvents = "auto";
 
                 try {
-                    const response = await fetch('/api/generate_slides/', {
+                    const formData = new FormData();
+                    formData.append("topic", topic);
+                    formData.append("slide_type", selectedSlideType);
+                    if (documentFile) {
+                        formData.append("document", documentFile);
+                    }
+
+                    const res = await fetch('/api/generate_slides/', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ topic, slide_type: selectedSlideType }), // topic becomes the key and the actual_topic is the value, then that json is converted into normal text single lined with stringify
+                        body: formData,
                     });
-
-                    const data = await response.json(); // whenever data is fetched sent , it is always in a string text format, so we need to convert it into json format using json.parse but here we are using response.json() which is a built in function that does the same thing as json.parse  (response has key "slides" and value is the array of slides with title , id and image)
-                    console.log('Respons data:', data);
-
+                    const data = await res.json();
+                    if (!res.ok) {
+                        throw new Error(data.error || "Unable to generate slides right now.");
+                    }
                     if (data.slides && Array.isArray(data.slides)) {
                         slidesData.length = 0;
-                        data.slides.forEach((s) => slidesData.push(s));
+                        data.slides.forEach(s => slidesData.push(s));
                         activeSlide = 0;
-
-                        container.innerHTML = '';
                         init();
-                    } else {
-                        console.error('No slides in response');
                     }
                 } catch (err) {
-                    console.error("Error calling API", err);
+                    console.error("API error", err);
+                    alert(err.message || "Unable to generate slides right now.");
                 } finally {
                     generateBtn.disabled = false;
                     document.getElementById("spinner").classList.add("hidden");
                     document.getElementById("generateText").textContent = "Generate slides";
-                    document.getElementById("loadingOverlay").style.opacity = "0";
-                    document.getElementById("loadingOverlay").style.pointerEvents = "none";
-
+                    overlay.style.opacity = "0"; overlay.style.pointerEvents = "none";
                 }
             });
 
-            downloadPngBtn.addEventListener("click", () => {
-                slidesData.forEach((slide, index) => {
-                    if (!slide.image) return;
+            // ── enter key ──
+            topicInput.addEventListener("keydown", e => {
+                if (e.key === "Enter") generateBtn.click();
+            });
 
-                    const link = document.createElement("a");
-                    link.href = slide.image;
-                    link.download = `slide_${index + 1}.png`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+            // ── downloads ──
+            document.getElementById("downloadPngBtn").addEventListener("click", () => {
+                slidesData.forEach((slide, i) => {
+                    if (!slide.image) return;
+                    const a = document.createElement("a");
+                    a.href = slide.image; a.download = `slide_${i + 1}.png`;
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
                 });
             });
 
-            downloadPdfBtn.addEventListener("click", () => {
+            document.getElementById("downloadPdfBtn").addEventListener("click", () => {
                 if (!window.jspdf) return;
-
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF("landscape", "px", "a4");
-
                 let firstPage = true;
-
-                slidesData.forEach((slide) => {
-                    if (!slide.image) return;
-
-                    // only treat data urls as AI slides
-                    if (!slide.image.startsWith("data:")) {
-                        return;
-                    }
-
-                    const imgData = slide.image;
-                    const imgProps = pdf.getImageProperties(imgData);
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                    const offsetY = (pdf.internal.pageSize.getHeight() - pdfHeight) / 2;
-                    const format = imgData.includes("image/png") ? "PNG" : "JPEG";
-
-                    if (!firstPage) {
-                        pdf.addPage();
-                    }
+                slidesData.forEach(slide => {
+                    if (!slide.image || !slide.image.startsWith("data:")) return;
+                    const imgProps = pdf.getImageProperties(slide.image);
+                    const pw = pdf.internal.pageSize.getWidth();
+                    const ph = (imgProps.height * pw) / imgProps.width;
+                    const oy = (pdf.internal.pageSize.getHeight() - ph) / 2;
+                    const fmt = slide.image.includes("image/png") ? "PNG" : "JPEG";
+                    if (!firstPage) pdf.addPage();
                     firstPage = false;
-
-                    pdf.addImage(imgData, format, 0, offsetY, pdfWidth, pdfHeight);
+                    pdf.addImage(slide.image, fmt, 0, oy, pw, ph);
                 });
-
                 pdf.save("ai_slides.pdf");
             });
 
-
-
-            shareBtn.addEventListener("click", async () => {
-                const response = await fetch("/api/share/", {
+            document.getElementById("shareBtn").addEventListener("click", async () => {
+                const res = await fetch("/api/share/", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ slides: slidesData }),
                 });
-
-                const data = await response.json();
-                const code = data.code;
-                const link = `${window.location.origin}/view/${code}`;
-
+                const data = await res.json();
+                const link = `${window.location.origin}/view/${data.code}`;
                 alert("Share this link:\n\n" + link);
             });
 
-
+            // ── profile modal ──
+            const profileToggle = document.getElementById('profileToggle');
+            const profileOverlay = document.getElementById('profileModalOverlay');
+            const profileModal = document.getElementById('profileModal');
+            const profileClose = document.getElementById('profileModalClose');
+            if (profileToggle && profileOverlay) {
+                profileToggle.addEventListener('click', e => { e.stopPropagation(); profileOverlay.classList.remove('hidden'); });
+                profileClose && profileClose.addEventListener('click', () => profileOverlay.classList.add('hidden'));
+                profileOverlay.addEventListener('click', e => { if (!profileModal.contains(e.target)) profileOverlay.classList.add('hidden'); });
+                document.addEventListener('keydown', e => { if (e.key === 'Escape') profileOverlay.classList.add('hidden'); });
+            }
         });
 
         document.getElementById('prevBtn').addEventListener('click', () => {
             activeSlide = (activeSlide - 1 + slidesData.length) % slidesData.length;
             updateSlides();
         });
-
         document.getElementById('nextBtn').addEventListener('click', () => {
             activeSlide = (activeSlide + 1) % slidesData.length;
             updateSlides();
         });
     </script>
 </body>
-
 </html>
+
+
+
