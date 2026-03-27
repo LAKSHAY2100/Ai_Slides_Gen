@@ -7,7 +7,7 @@ django-allauth>=65.0,<70.0
 langchain-community>=0.3,<0.4
 langchain-core>=0.3,<0.4
 langchain-classic>=1.0,<2.0
-langchain-text-splitters>=0.3,<0.4
+langchain-text-splitters>=1.0,<2.0
 langchain-groq>=0.2,<0.3
 
 faiss-cpu>=1.8,<2.0
