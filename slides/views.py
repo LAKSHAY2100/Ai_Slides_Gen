@@ -1,6 +1,4 @@
 import base64
-import csv
-import io
 import json
 import os
 from pathlib import Path
@@ -20,7 +18,8 @@ from urllib.parse import quote
 
 from .models import SharedSlides
 
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import Docx2txtLoader, PyPDFLoader
+from langchain_community.document_loaders.csv_loader import CSVLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import FAISS
@@ -39,7 +38,7 @@ GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 client = genai.Client()
 MAX_DOCUMENT_CHARS = 6000
-ALLOWED_DOCUMENT_EXTENSIONS = {".pdf", ".csv", ".doc", ".docx"}
+ALLOWED_DOCUMENT_EXTENSIONS = {".pdf", ".csv", ".docx"}
 
 
 def slide_builder(request):
@@ -80,44 +79,42 @@ def _clean_source_text(text: str) -> str:
     return cleaned[:MAX_DOCUMENT_CHARS]
 
 
+def storage(chunks, topic="Random Topic", slide_type="General") -> str:
+    if not chunks:
+        raise ValueError("No readable content found in the uploaded file.")
+
+
+    db = FAISS.from_documents(chunks, OllamaEmbeddings())
+    retriever = db.as_retriever(search_kwargs={"k": 8})
+
+    llm = ChatGroq(model="openai/gpt-oss-120b")
+    prompt = ChatPromptTemplate.from_template(
+        """
+        Summarize the context properly so that it can be used to generate slide titles and images about {topic} in a {slide_type} style presentation.
+        <context>
+        {context}
+        </context>"""
+    )
+    document_chain = create_stuff_documents_chain(llm, prompt)
+    retrieval_chain = create_retrieval_chain(retriever, document_chain)
+    response = retrieval_chain.invoke({"topic": topic, "slide_type": slide_type, "input": "Summarize this document"})
+    return response["answer"]
+
+
 def _extract_text_from_pdf(uploaded_file, topic="Random Topic", slide_type="General") -> str:
+    tmp_path = None
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
             for chunk in uploaded_file.chunks():
                 tmp_file.write(chunk)
             tmp_path = tmp_file.name
 
-        # 2. Load and Split
         loader = PyPDFLoader(tmp_path)
         docs = loader.load()
-        
-        # Cleanup the temp file immediately after loading into memory
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=20)
+        chunks = text_splitter.split_documents(docs)
+        return storage(chunks, topic, slide_type)
 
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000 , chunk_overlap=20)
-        documents =text_splitter.split_documents(docs)
-
-        db = FAISS.from_documents(documents, OllamaEmbeddings())
-        retriever = db.as_retriever(search_kwargs={"k": 8})
-
-        llm=ChatGroq(model="openai/gpt-oss-120b")
-
-        prompt = ChatPromptTemplate.from_template("""
-        Summarize the context properly so that it can be used to generate slide titles and images about {topic} in a {slide_type} style presentation.
-        <context>
-        {context} 
-        </context>"""
-        )
-        document_chain = create_stuff_documents_chain(llm , prompt)
-        retrieval_chain = create_retrieval_chain(retriever, document_chain)
-
-        response = retrieval_chain.invoke({"topic":topic,"slide_type":slide_type,"input": "Summarize this document"})
-
-        print("Response from retrieval chain for PDF content extraction:", response['answer'])
-
-        return response['answer']
-    
     except Exception as e:
         print(f"Error in PDF extraction: {e}")
         # Fallback to basic extraction if RAG fails
@@ -125,44 +122,46 @@ def _extract_text_from_pdf(uploaded_file, topic="Random Topic", slide_type="Gene
         from pypdf import PdfReader
         reader = PdfReader(uploaded_file)
         return "\n".join(page.extract_text() or "" for page in reader.pages)
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.remove(tmp_path)
 
 
-def _extract_text_from_csv(uploaded_file) -> str:
-    uploaded_file.seek(0)
-    decoded = uploaded_file.read().decode("utf-8", errors="ignore")
-    rows = []
-    for row in csv.reader(io.StringIO(decoded)):
-        cleaned_row = [cell.strip() for cell in row if cell.strip()]
-        if cleaned_row:
-            rows.append(" | ".join(cleaned_row))
-        if len(rows) >= 40:
-            break
-    return "\n".join(rows)
-
-
-def _extract_text_from_docx(uploaded_file) -> str:
+def _extract_text_from_csv(uploaded_file, topic="Random Topic", slide_type="General") -> str:
+    tmp_path = None
     try:
-        from docx import Document
-    except ImportError as exc:
-        raise ValueError("DOCX upload support is not installed on this server yet.") from exc
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp_file:
+            for chunk in uploaded_file.chunks():
+                tmp_file.write(chunk)
+            tmp_path = tmp_file.name
 
-    uploaded_file.seek(0)
-    document = Document(uploaded_file)
-    sections = [paragraph.text.strip() for paragraph in document.paragraphs if paragraph.text.strip()]
-    for table in document.tables:
-        for row in table.rows:
-            cells = [cell.text.strip() for cell in row.cells if cell.text.strip()]
-            if cells:
-                sections.append(" | ".join(cells))
-    return "\n".join(sections)
-
-
-def _extract_text_from_doc(uploaded_file) -> str:
-    uploaded_file.seek(0)
-    decoded = uploaded_file.read().decode("utf-8", errors="ignore")
-    return re.sub(r"[^A-Za-z0-9\s,.;:!?()/@%&+\-]", " ", decoded)
+        loader = CSVLoader(file_path=tmp_path)
+        documents = loader.load()
+        print(loader.load())
+        return storage(documents, topic, slide_type)
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.remove(tmp_path)
 
 
+def _extract_text_from_docx(uploaded_file, topic="Random Topic", slide_type="General") -> str:
+    tmp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as tmp_file:
+            for chunk in uploaded_file.chunks():
+                tmp_file.write(chunk)
+            tmp_path = tmp_file.name
+
+        loader = Docx2txtLoader(tmp_path)
+        documents = loader.load()
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=20)
+        chunks = text_splitter.split_documents(documents)
+        print(chunks)
+        return storage(chunks, topic, slide_type)
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.remove(tmp_path)
+            
 def _extract_text_from_upload(uploaded_file,topic,slide_type) -> str:
     extension = Path(uploaded_file.name).suffix.lower()
     if extension not in ALLOWED_DOCUMENT_EXTENSIONS:
@@ -173,13 +172,14 @@ def _extract_text_from_upload(uploaded_file,topic,slide_type) -> str:
         if extension == ".pdf":
             extracted = _extract_text_from_pdf(uploaded_file,topic,slide_type)
         elif extension == ".csv":
-            extracted = _extract_text_from_csv(uploaded_file)
+            extracted = _extract_text_from_csv(uploaded_file,topic,slide_type)
         elif extension == ".docx":
-            extracted = _extract_text_from_docx(uploaded_file)
+            extracted = _extract_text_from_docx(uploaded_file,topic,slide_type)
         else:
-            extracted = _extract_text_from_doc(uploaded_file)
+            raise ValueError("Unsupported file type. Please upload one of: .csv, .docx, .pdf.")
     except Exception as exc:
-        raise ValueError(f"Could not read the uploaded {extension[1:].upper()} file.") from exc
+        print(f"{extension.upper()} upload failed: {exc!r}")
+        raise ValueError(f"Could not read the uploaded {extension[1:].upper()} file: {exc}") from exc
 
     cleaned = _clean_source_text(extracted)
     if not cleaned:
